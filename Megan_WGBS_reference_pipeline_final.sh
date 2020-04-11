@@ -10,7 +10,7 @@ trim_galore --paired -o trim/ sample_1.fastq.gz sample_2.fastq.gz
 biscuit index <path_to_genome_folder> hg19.fa
 
 #alignment
-biscuit align -t 30 <path_to_genome_folder> hg19.fa A1/*1.fq.gz A1/*2.fq.gz | samtools view -Sb > A1.bam
+biscuit align -t 18 <path_to_genome_folder> hg19.fa A1/*1.fq.gz A1/*2.fq.gz | samtools view -Sb > A1.bam
 
 #flagstat 
 samtools flagstat -@ 8 SAMPLE.bam -o samtoolsflagstat_out/
@@ -31,29 +31,17 @@ for i in *.sort.bam
 do samtools index "$i"
 done 
 
-#filterbam
-for i in *sort.bam
-do 
-bamtools filter -isMapped true -isPaired true -isProperPair true -forceCompression -in $i -out $i.filter
-done
-
-#rename
-for i in *sort.bam.filter
-do
-mv -- "$i" "${i/%.sort.bam.filter/_filter_sort.bam}"
-done
-
 #picard_mark_duplicates
 java –Xmx4g –Xms4g -jar /path/to/Picard/MarkDuplicates.jar MarkDuplicates \
       I=input.bam \
       O=_marked_duplicates.bam \
-      M=marked_dup_metrics.txt
-      ASSUME_SORTED=true
+      M=marked_dup_metrics.txt \
+      ASSUME_SORTED=true \
+      REMOVE_DUPLICATES=false \
+      PROGRAM_RECORD_ID='null' \
+      CREATE_INDEX=true \
+      VALIDATION_STRINGENCY=LENIENT
       
-#index
-for i in *filter_sort_marked_duplicates.bam
-do samtools index "$i"
-done
 
 #flagstat 
 samtools flagstat -@ 8 SAMPLE_filter_sort_marked_duplicates.bam -o samtoolsflagstat_out/
